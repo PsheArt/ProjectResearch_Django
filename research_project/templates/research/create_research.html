@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% load custom_tags %}
+{% block content %}
+
+<body>
+    <section class="pt-5">
+        <div class="container-xl d-flex flex-column gap-3">
+            <h2 class="text-center h-2 section_title">Экспертиза качества маркетинговых исследований</h2>
+            <ul class="nav justify-content-center gap-2 shadow rounded-2 fs-5 py-2">
+                <li class="nav-item">
+                    <a class="nav-link text-dark link-hover link-active" href="{% url 'research_list' %}">Список экспертиз качества маркетинговых исследований</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active text-dark link-hover" aria-current="page" href="my_surveys.html">Мои экспертизы</a>
+                </li>
+            </ul>
+        </div>  
+    </section>
+    <section class="pt-5">
+        <div class = "container-xl d-flex flex-column gap-3">
+            
+ <form class= "shadow p-3 rounded-2 position-relative" method="post" enctype="multipart/form-data" >
+    <h2>Форма исследования</h2>
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                {{ form.title|add_class:"form-control" }}
+            </div>
+        
+            <div class="mb-3">
+                <label for="{{ form.pdf_document.id_for_label }}" class="form-label">{{ form.pdf_document.label }}</label>
+                {{ form.pdf_document|add_class:"form-control" }}
+            </div>
+        
+            <div class="mb-3">
+                <label class="form-label">{{ form.participants.label }}</label>
+                <div>
+                    {{ form.participants}}
+                </div>
+            </div>
+    <div id="aspects-container">
+
+    </div>
+    <button type="button" class="btn btn-primary add-aspect">Добавить аспект</button>
+    <button type="submit" class="btn btn-success">Отправить</button>
+</form>
+</div>
+</section>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        let aspectIndex = 0;
+    
+        $(document).on('click', '.add-aspect', function() {
+            aspectIndex++;
+            $('#aspects-container').append(
+                '<div class="aspect mb-4 border p-3">' +
+                    '<h5>Аспект ' + aspectIndex + '</h5>' +
+                    '<div class="form-group">' +
+                        '<input type="text" name="aspect_name" placeholder="Аспект экспертизы" class="form-control mb-2" required />' +
+                        '<input type="number" name="stage_number" placeholder="Этап экспертизы" class="form-control mb-2" required />' +
+                    '</div>' +
+                    '<div class="parameters-container mb-3">' +
+                        '<h6>Параметры оценки:</h6>' +
+                        '<input type="text" name="parameter_name_[' + aspectIndex + ']" placeholder="Параметр оценки" class="form-control mb-2" />' +
+                    '</div>' +
+                    '<button type="button" class="btn btn-secondary add-parameter">Добавить параметр</button>' +
+                    '<hr/>' +
+                '</div>'
+            );
+        });
+    
+        $(document).on('click', '.add-parameter', function() {
+            let parametersContainer = $(this).siblings('.parameters-container');
+            parametersContainer.append(
+                '<input type="text" name="parameter_name_[' + aspectIndex + ']" placeholder="Параметр оценки" class="form-control mb-2" />'
+            );
+        });
+    });
+    </script>
+</body>
+{% include 'core/pagination.html' %}
+
+{% endblock content %}

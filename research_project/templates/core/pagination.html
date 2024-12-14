@@ -1,0 +1,15 @@
+<nav class="d-flex justify-content-center mt-4">
+    <ul class="pagination">
+        <center>
+            {%if page_obj.has_previous %} 
+                <a href="?page={{page_obj.previous_page_number}}"><</a> 
+            {% endif %}
+            <span>{{page_obj.number}}</span>
+           
+            {%if page_obj.has_next %} 
+                <a href="?page={{page_obj.next_page_number}}">></a>
+            {% endif %}
+        </center>
+
+    </ul>
+</nav>

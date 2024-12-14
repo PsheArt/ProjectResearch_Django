@@ -1,0 +1,341 @@
+{% extends 'core/base.html' %}
+{% load custom_tags %}
+{% block content %}
+    <section class="pt-5">
+        <div class="container-xl d-flex flex-column gap-3">
+            <h2 class="text-center h-2 section_title">Экспертиза качества маркетинговых исследований</h2>
+            <ul class="nav justify-content-center gap-2 shadow rounded-2 fs-5 py-2">
+                <li class="nav-item">
+                    <a class="nav-link text-dark link-hover link-active" href="{% url 'research_list' %}">Список экспертиз качества маркетинговых исследований</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active text-dark link-hover" aria-current="page" href="my_surveys.html">Мои экспертизы</a>
+                </li>
+            </ul>
+        </div>  
+    </section>
+<section class="pt-5">
+    <div class="container-xl d-flex flex-column gap-3">
+    
+        <form class ="shadow rounded-2 fs-5 py-2 p-3"> 
+                    <div class="col-6">
+                        <h3 class = ""> {{ research.title}} </h3> 
+                    </div>
+                    <div class="col-12 d-flex justify-content-between">
+                        {% if research.pdf_document %}
+                        <div>
+                            <a href="{{ research.pdf_document.url }}" class="btn btn-secondary w-5r rounded-2" id="previewBtn">Предпросмотр документа</a>
+                        </div>
+                        <div>
+                            <a href="{{ research.pdf_document.url }}" class="btn btn-success w-5r rounded-2" download>Скачать документ</a>
+                        </div>
+                        {% else %}
+                        Нет документа
+                    {% endif %}
+                    </div>
+                    <div class="mt-4 rounded-2 overflow-auto">
+                        <table class="table table-striped table-hover table-bordered">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="text-nowrap col-hover" role="button">
+                                    Этап экспертизы 
+                                </th>
+                                <th scope="col" class="text-nowrap col-hover" role="button">
+                                    Аспект экспертизы 
+                                </th>
+                                <th scope="col" class="text-nowrap col-hover" role="button">
+                                    Инструменты проведения экспертизы 
+                                </th>       
+                            </tr>
+                            </thead>
+                            <tbody>
+                              {% for aspect in aspects %}
+                                <tr role="button">
+                                    <th scope="row">{{ aspect.stage_number }}</th>
+                                    <td>
+                                        {{ aspect.name }}
+                                    </td>
+                                        <td class ="text-center"> 
+                                            <button class="btn btn-primary w-5r rounded-2" type="button" data-bs-toggle="modal" data-bs-target="#{{ aspect.stage_number }}-form {% if not aspects.last %} #{{ results.id }}-form1 {% endif %}" >
+                                            Оценить
+                                             </button>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center" id="show">
+                                            <button class="btn btn-primary" type="button" id="showChart_{{aspect.id}}">Посмотреть график</button>
+                                        </div>
+                                        <div id="chartModal" style="display:none;">
+                                            <canvas id="myChart"></canvas>
+                                            <button class="btn btn-warning" onclick="document.getElementById('chartModal').style.display='none'">Закрыть</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr role="button">
+                                    <th scope="row">{{ max_stage }}</th>
+                                    <td>
+                                        {{ results.name }}
+                                    </td>
+                                        <td class ="text-center"> 
+                                            <button class="btn btn-primary w-5r rounded-2" type="button" data-bs-toggle="modal" data-bs-target="#{{ results.id }}-form1" >
+                                            Оценить
+                                             </button>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center" id="show">
+                                            <button class="btn btn-primary" type="button" id="showChart_{{aspect.id}}">Посмотреть график</button>
+                                        </div>
+                                        <div id="chartModal" style="display:none;">
+                                            <canvas id="myChart"></canvas>
+                                            <button class="btn btn-warning" onclick="document.getElementById('chartModal').style.display='none'">Закрыть</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <a href="{% url 'research_list' %}" class="btn btn-secondary">Назад к списку исследований</a>
+        </form>
+    </div>
+</section>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="pdfModal" tabindex="-1" aria-labelledby="pdfModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pdfModalLabel">{{Предпросмотр}}</h5>
+                <button class="fa-regular fa-trash-can text-danger card_icon"></i>
+            </div>
+            <div class="modal-body">
+                <canvas id="pdfCanvas" style="width: 100%; height: auto;"></canvas>
+            </div>
+            <div class="modal-footer">
+                <button id="prevPage" class="btn btn-secondary">Назад</button>
+                <span id="pageInfo"></span>
+                <button id="nextPage" class="btn btn-secondary">Вперед</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% for aspect in aspects %}
+<div class="modal fade" id="{{ aspect.stage_number }}-form" tabindex="-1" aria-labelledby="{{ aspect.stage_number }}-form" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="{{ aspect.stage_number }}-form">Форма для проведения {{ aspect.stage_number }} этапа </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body shadow mt-4 rounded-2 overflow-auto">
+                <form method="post" class="shadow p-3 rounded-2 position-relative">
+                    {% csrf_token %}
+                        <table class = "table table-striped table-hover table-bordered mx-auto">
+                                <tr>
+                                    <th rowspan = "2" scope="col" class="text-nowrap text-center align-items-center" role="button">
+                                        Параметр оценки
+                                    </th>
+                                    <th colspan = "5" scope="col" class="text-nowrap text-center" role="button">
+                                        Интерпретация оценки и баллы 
+                                    </th>      
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-center" role="button">
+                                        абсолютно не соответствует
+                                    </th>    
+                                    <th scope="row" class="text-center" role="button"> 
+                                        не соответствует
+                                    </th>   
+                                    <th scope="row" class="text-center" role="button">
+                                        частично соответствует
+                                    </th>   
+                                    <th scope="row" class="text-center" role="button">
+                                        соответствует
+                                    </th>   
+                                    <th scope="row" class="text-center" role="button">
+                                        полностью соответствует
+                                    </th>   
+                                </tr>
+                                {% for param in aspect.parameters.all %}
+                                <tr>
+                                    <th for="score_{{ param.id }}" scope="row" rowspan="2" class="text-nowrap text-center" role="button">
+                                        {{param.name}}
+                                    </th>    
+                                    <th class="text-nowrap text-center" role="button">
+                                        1
+                                    </th>    
+                                    <th class="text-nowrap text-center" role="button">
+                                        2
+                                    </th>   
+                                    <th class="text-nowrap text-center" role="button">
+                                        3
+                                    </th>   
+                                    <th class="text-nowrap text-center" role="button">
+                                        4
+                                    </th>   
+                                    <th class="text-nowrap text-center" role="button">
+                                        5
+                                    </th>   
+                                </tr>
+                                <tr>
+                                    <th colspan = "5" class="text-nowrap text-center" role="button">
+                                        <input type="number" class="form-control" id="score_{{ param.id }}" name="score_{{ param.id }}" 
+                                        value="{{ param.average_score|default:'' }}" min="1" max="5">
+                                    </th>   
+                                </tr>
+                                {% endfor %}
+                                <tr>
+                                    <th scope="row" class="text-nowrap text-center" role="button">
+                                        Средняя оценка
+                                    </th>    
+                                    <th colspan = "5" class="text-center" role="button">
+                                        
+                                    </th>    
+                                    
+                                </tr>
+                                <tr>
+                                    <th rowspan = "4"  class="text-nowrap text-center" role="button">
+                                        Интерпретация средней оценки
+                                    </th> 
+                                </tr>   
+                                <tr>
+                                    <th colspan="5" class="text-center" role="button">
+                                        от 4,1 до 5,0 баллов	– высокая степень соответствия
+                                    </th>    
+                                </tr>
+                                <tr>   
+                                    <th colspan="5" class="text-center" role="button">
+                                        от 2,6 до 4,0 баллов	– средняя степень соответствия
+                                    </th>   
+                                </tr>
+                                <tr>
+                                    <th  colspan="5"  class="text-center" role="button">
+                                        От 1,0 до 2,5 баллов	– низкая степень соответствия
+                                    </th>    
+                                </tr>   
+                        </table>
+                        <div class="d-flex align-items-center">
+                            <button  class="btn btn-primary w-5r rounded-4" type="submit">Отправить</button>
+                        </div>      
+                    </form>
+                    
+                    
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('showChart_{{aspect.id}}').addEventListener('click', function() {
+        console.debug('Запрос к серверу...');
+        fetch('/research/get_average_scores/{{aspect.id}}/') 
+            .then(response => response.json())
+            .then(data => {
+            const labels = Object.keys(data);
+            const scores = Object.values(data);
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            const myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Средняя оценка',
+                        data: scores,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                        scales: {
+                            y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Ошибка:', error));
+        document.getElementById('chartModal').style.display = 'block'; 
+        document.getElementById('show').style.display = 'none';
+});
+    </script>
+    {% endfor %}
+    <div class="modal fade" id="{{ results.id }}-form1" tabindex="-1" aria-labelledby="{{ results.id }}-form1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="{{ results.id }}-form1">Форма для проведения {{ results.aspect.stage_number }} этапа </h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body shadow mt-4 rounded-2 overflow-auto">
+                    <form method="post" class="shadow p-3 rounded-2 position-relative">
+                        {% csrf_token %}
+                        <textarea type="text" name="results_{{results.id}}" cols="45" rows="10"></textarea>
+                            <div class="d-flex align-items-center">
+                                <button  class="btn btn-primary w-5r rounded-4" type="submit">Отправить</button>
+                            </div>      
+                    </form>
+                        
+                        
+                </div>
+            </div>
+        </div>
+    </div>
+    
+<script>
+    let pdfDoc = null;
+    let currentPage = 1;
+    let totalPages = 0;
+
+    document.getElementById('previewBtn').addEventListener('click', function(event) {
+        event.preventDefault();
+        const pdfUrl = this.href;
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+
+        pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
+            pdfDoc = pdf;
+            totalPages = pdf.numPages;
+            document.getElementById('pageInfo').textContent ="Страница: " + currentPage + " из " + totalPages;
+            renderPage(currentPage);
+        });
+
+        const pdfModal = new bootstrap.Modal(document.getElementById('pdfModal'));
+        pdfModal.show();
+
+        document.getElementById('prevPage').onclick = function() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+            }
+        };
+
+        document.getElementById('nextPage').onclick = function() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPage(currentPage);
+            }
+        };
+    });
+
+    function renderPage(pageNum) {
+        pdfDoc.getPage(pageNum).then(function(page) {
+            const viewport = page.getViewport({ scale: 1 });
+            const canvas = document.getElementById('pdfCanvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            const renderContext = {
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport
+            };
+            page.render(renderContext);
+            document.getElementById('pageInfo').textContent = "Страница: " + currentPage + " из " + totalPages;
+        });
+    }
+</script>
+{% include 'core/pagination.html' %}
+
+{% endblock content %}

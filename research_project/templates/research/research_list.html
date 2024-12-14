@@ -1,0 +1,171 @@
+
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<section class="pt-5">
+    <div class="container-xl d-flex flex-column gap-3">
+
+        <h2 class="text-center h-2 section_title">Экспертиза качества маркетинговых исследований</h2>
+
+        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb link-hover text-dark text-decoration-none fs-5">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'home' %}" class="link-hover text-dark text-decoration-none">
+                        Главная
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Список экспертиз качества маркетинговых исследований</li>
+            </ol>
+        </nav>
+
+        <ul class="nav justify-content-center gap-2 shadow rounded-2 fs-5 py-2">
+            <li class="nav-item">
+                <a class="nav-link text-dark link-hover link-active" href="#">Список экспертиз качества маркетинговых исследований</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active text-dark link-hover" aria-current="page" href="{% url 'my_researches' %}">Мои экспертизы</a>
+            </li>
+        </ul>
+    <form class="shadow p-3 rounded-2 position-relative">
+
+        <i class="fa-regular fa-trash-can text-danger card_icon"></i>
+
+        <div class="row align-items-start justify-content-between">
+
+
+                <div class="col-12 row mx-auto p-0">
+                    <div class="col-lg-5 col-md-6 col-3">
+                        <label for="expert_name" class="form-label">Наименование:</label>
+                        <input type="text" class="form-control" id="expert_name">
+                    </div>
+
+                    <div class="col-lg-5 col-md-3 col-3">
+                        <label for="order_action" class="form-label">Дата начала:</label>
+                        
+                        <div class="d-flex justify-content-start gap-0">
+                            <div class="input-group flex-nowrap w-auto">
+                                <span class="input-group-text rounded-start" id="basic-addon1">с</span>
+                                <input id="order_action" type="date" class="form-control w-100 mw-8r rounded-0 flex-grow-0 flex-shrink-1">
+                            </div>
+                            <div class="input-group flex-nowrap w-auto">
+                                <span class="input-group-text  rounded-0" id="basic-addon1">до</span>
+                                <input type="date" class="form-control w-100 mw-8r rounded-end flex-grow-0 flex-shrink-1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7 col-md-6 col-12 mt-3">
+                        <label for="order_client" class="form-label">Автор:</label>
+                        <div class="d-flex">
+                            <input id="order_client" type="text" class="form-control rounded-0 rounded-start">
+                            <button class="btn btn-primary w-5r rounded-0" type="button" data-bs-toggle="modal" data-bs-target="#select_expert_modal">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                            <button class="btn btn-danger w-5r rounded-0 rounded-end">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5 col-md-6 col-12 mt-3">
+                        <label for="order_service" class="form-label">Эксперты:</label>
+                        <div class="d-flex">
+                            <input id="order_service" type="text" class="form-control rounded-0 rounded-start">
+                            <button class="btn btn-primary w-5r rounded-0" type="button" data-bs-toggle="modal" data-bs-target="#select_expert_modal" >
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                            <button class="btn btn-danger w-5r rounded-0 rounded-end">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            
+                <div class="col-12 mt-3">
+                    <button class="btn btn-c_yellow-700 w-100 ">Найти</button>
+                </div>
+        </div>
+
+    </form>
+    <div class="shadow mt-4 rounded-2 overflow-auto">
+        <input type="text" id="searchInput" placeholder="Поиск...">
+        <table class="table table-striped table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-nowrap col-hover" role="button">
+                        Наименование <i class="fa-solid fa-arrow-up-short-wide text-c_yellow-700"></i>
+                    </th>
+                    <th scope="col" class="text-nowrap col-hover" role="button">
+                        Даты начала <i class="fa-solid fa-arrow-up-short-wide text-c_yellow-700"></i>
+                    </th>
+                    <th scope="col" class="text-nowrap col-hover" role="button">
+                        Автор <i class="fa-solid fa-arrow-up-short-wide text-c_yellow-700"></i>
+                    </th>
+                    <th scope="col" class="text-nowrap col-hover" role="button">
+                        Средняя оценка <i class="fa-solid fa-arrow-up-short-wide text-c_yellow-700"></i>
+                    </th>
+                    <th scope="col" class="text-nowrap col-hover" role="button">
+                        Эксперты <i class="fa-solid fa-arrow-up-short-wide text-c_yellow-700"></i>
+                    </th>
+                    <th scope="col" class="text-nowrap col-hover" role="button">
+                       Доступ<i class="fa-solid fa-arrow-up-short-wide text-c_yellow-700"></i>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                {% for research in researches %}
+                    <tr>
+                        <td><a href="{% url 'research_detail' research.id %}" class="link-hover d-block">{{ research.title }}</a></td>
+                        <td>{{ research.created_at }}</td>
+                        <td>
+                            <a href=/" class="link-hover d-block">{{research.author}}</a>
+                        </td>
+                        <td>
+                           {{research.average_rating}}
+                        </td>
+                        <td>
+                            {% for us in research.participants.all %}
+                            <a href=/" class="link-hover d-block">{{us.username}}</a>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if user in research.participants.all or user in research.author %}
+                            {% if research.is_completed %}
+                            <a href="#" class="btn btn-warning">Исследование завершено</a>
+                            {% else %}
+                                <a href=" {% url 'rate_aspect' research.id %}" class="btn btn-primary">Оценить</a>
+                            {% endif %}
+                            {% else %}
+                                <span class="text-muted">Доступно только на чтение</span>
+                            {% endif %}
+                           
+                        </td>
+                        
+                    </tr>
+                {% endfor %}
+            </tbody>
+    </table>
+</div>
+</section>
+{% include 'core/pagination.html' %}
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#tableBody tr');
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            let found = false;
+
+            cells.forEach(cell => {
+                if (cell.textContent.toLowerCase().includes(filter)) {
+                    found = true;
+                }
+            });
+
+            row.style.display = found ? '' : 'none';
+        });
+    });
+</script>
+{% endblock content %}

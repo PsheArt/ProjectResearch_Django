@@ -1,0 +1,123 @@
+
+{% extends 'core/base.html' %}
+
+{% block content %}
+<body>
+    <section class="pt-5">
+        <div class="container-xl d-flex flex-column gap-3">
+            <h2 class="text-center h-2 section_title">Экспертиза качества маркетинговых исследований</h2>
+            <ul class="nav justify-content-center gap-2 shadow rounded-2 fs-5 py-2">
+                <li class="nav-item">
+                    <a class="nav-link text-dark link-hover link-active" href="{% url 'research_list' %}">Список экспертиз качества маркетинговых исследований</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active text-dark link-hover" aria-current="page" href="my_surveys.html">Мои экспертизы</a>
+                </li>
+            </ul>
+        </div>  
+    </section>
+            <div>
+                <div class="">
+                    <div class="">
+                        <div class="">
+                        </div>
+                        <div class="modal-body shadow mt-4 rounded-2 overflow-auto">
+                            <form method="post" class="shadow p-3 rounded-2 position-relative">
+                                {% csrf_token %}
+                                <h1 class="fs-5" id="2-form">Форма для проведения {{ research.aspect.stage_number }} этапа </h1>
+                                    <table class = "table table-striped table-hover table-bordered mx-auto">
+                                            <tr>
+                                                <th rowspan = "2" scope="col" class="text-nowrap text-center align-items-center" role="button">
+                                                    Параметр оценки
+                                                </th>
+                                                <th colspan = "5" scope="col" class="text-nowrap text-center" role="button">
+                                                    Интерпретация оценки и баллы 
+                                                </th>      
+                                            </tr>
+                                            <tr>
+                                                <th scope="row" class="text-center" role="button">
+                                                    абсолютно не соответствует
+                                                </th>    
+                                                <th scope="row" class="text-center" role="button"> 
+                                                    не соответствует
+                                                </th>   
+                                                <th scope="row" class="text-center" role="button">
+                                                    частично соответствует
+                                                </th>   
+                                                <th scope="row" class="text-center" role="button">
+                                                    соответствует
+                                                </th>   
+                                                <th scope="row" class="text-center" role="button">
+                                                    полностью соответствует
+                                                </th>   
+                                            </tr>
+                                            {% for rating in user_ratings %}
+                                            <tr>
+                                                <th scope="row" rowspan="2" class="text-nowrap text-center" role="button">
+                                                    {{ rating.parameter.name }}
+                                                </th>    
+                                                <th class="text-nowrap text-center" role="button">
+                                                    1
+                                                </th>    
+                                                <th class="text-nowrap text-center" role="button">
+                                                    2
+                                                </th>   
+                                                <th class="text-nowrap text-center" role="button">
+                                                    3
+                                                </th>   
+                                                <th class="text-nowrap text-center" role="button">
+                                                    4
+                                                </th>   
+                                                <th class="text-nowrap text-center" role="button">
+                                                    5
+                                                </th>   
+                                            </tr>
+                                            <tr>
+                                                <th colspan = "5" class="text-nowrap text-center" role="button">
+                                                    <input type="number" name="score_{{ rating.parameter.id }}" value="{{ rating.score }}" min="1" max="5" step="1">
+                                                </th>   
+                                            </tr>
+                                            <tr>
+                                                <th scope="row" class="text-nowrap text-center" role="button">
+                                                    Средняя оценка
+                                                </th>    
+                                                <th colspan = "5" class="text-center" role="button">
+                                                    {{rating.average_score}}
+                                                </th>    
+                                                
+                                            </tr>
+                                            <tr>
+                                                <th rowspan = "4"  class="text-nowrap text-center" role="button">
+                                                    Интерпретация средней оценки
+                                                </th> 
+                                            </tr>   
+                                            <tr>
+                                                <th colspan="5" class="text-center" role="button">
+                                                    от 4,1 до 5,0 баллов	– высокая степень соответствия
+                                                </th>    
+                                            </tr>
+                                            <tr>   
+                                                <th colspan="5" class="text-center" role="button">
+                                                    от 2,6 до 4,0 баллов	– средняя степень соответствия
+                                                </th>   
+                                            </tr>
+                                            <tr>
+                                                <th  colspan="5"  class="text-center" role="button">
+                                                    От 1,0 до 2,5 баллов	– низкая степень соответствия
+                                                </th>    
+                                            </tr>   
+                                    </table>
+                                    <div class="d-flex align-items-center">
+                                        <button  class="btn btn-primary w-5r rounded-4" type="submit">Обновить</button>
+                                    </div>  
+                                    {% endfor %}    
+                                </form>     
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+{% include 'core/pagination.html' %}
+
+{% endblock content %}

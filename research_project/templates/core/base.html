@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Экспертиза качества маркетинговых исследований</title>
+    <meta name="viewport" content="width=device-width; initial-scale=1.0">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://use.fontawesome.com/releases/v5.0.4/css/all.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script async src="https://kit.fontawesome.com/c98347f4c9.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body data-layout-mode="light" class="bg-gray-100 dark:bg-gray-900 bg-[url('../images/bg-body.png')] dark:bg-[url('../images/bg-body-2.png')]">
+
+
+    <header class="w-100 bg-primary">
+        <div class="d-flex justify-content-between align-items-center container-xl py-3">
+
+            <a href="#" class="text-white fs-4 font-logo text-decoration-none link-hover">Экспертиза качества маркетинговых исследований</a>
+
+            <div class="d-flex gap-md-5 gap-3 align-items-center fs-5">
+              {% if user.is_authenticated and user.is_active %}
+                <span class="text-white">{{user.username}}</span>
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-primary"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            Выйти
+                        </button>
+                      </form>
+                    {% else %}
+                    <form action="{% url 'login' %}" method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-primary"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            Войти
+                        </button>
+                      </form>
+                {% endif %}
+            </div>
+
+        </div>
+    </header>
+    {% block content %}
+
+    {% endblock content %}
+    <footer class="mt-5 bg-black">
+        <div class="container-xl mx-auto row justify-content-between py-3">
+            <div class="col-lg-7 col-12 d-flex gap-5 justify-content-lg-start justify-content-between">
+                <div class="d-flex flex-column gap-2">
+                    <a href="{% url 'research_list' %}" class="text-white text-decoration-none link-hover fs-5 w-auto">Список экспертиз качества маркетинговых исследований</a>
+                    <a href=" {% if user.is_authenticated and user.is_active %} {% url 'create_research' %} {% else %} {% url 'login' %} {% endif %} "  class="text-white text-decoration-none link-hover fs-5">Мои экспертизы</a>
+                    <a href="range_expert.html" class="text-white text-decoration-none link-hover fs-5">Оценить</a>
+                </div>
+                     
+            </div>
+
+            <div class="col-lg-auto col-12 mt-lg-0 mt-3 d-flex flex-lg-column justify-content-between">
+                {% if user.is_authenticated and user.is_active %}
+                <p class="text-white fs-5">{{user.username}}</p>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-primary"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        Выйти
+                    </button>
+                  </form>
+                  {% else %}
+                  <form action="{% url 'login' %}" method="post">
+                      {% csrf_token %}
+                      <button class="btn btn-primary"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                          Войти
+                      </button>
+                    </form>
+              {% endif %}
+            </div>
+        </div>
+
+    </footer>

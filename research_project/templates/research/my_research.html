@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<section class="pt-5">
+    <div class="container-xl d-flex flex-column gap-3">
+        <h2 class="text-center h-2 section_title">Экспертиза качества маркетинговых исследований</h2>
+        <ul class="nav justify-content-center gap-2 shadow rounded-2 fs-5 py-2">
+            <li class="nav-item">
+                <a class="nav-link text-dark link-hover" href="{% url 'research_list' %}">Список экспертиз качества маркетинговых исследований</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active text-dark link-hover link-active" aria-current="page" href="#">Мои экспертизы</a>
+            </li>
+        </ul>
+    </div>  
+</section>
+<section class = "pt-5">
+    <div class="container-xl d-flex flex-column gap-3 ">
+       <div class = "shadow rounded-2  fs-5 py-2"> 
+          <h3 class="text-center h-2 section_title ">Добро пожаловать!</h3>
+          <p class="text-center h-2 section_title "> Здесь вы можете посмотреть, создать и оценить качество маркетинговых исследований </p>
+          <div class = "container d-flex fs-5 py-3 ">
+            {% if user.is_authenticated and user.is_active %}
+                {% else %}
+            {% endif %}
+            <a href=" {% if user.is_authenticated and user.is_active %} {% url 'create_research' %} {% else %} {% url 'login' %} {% endif %} " class="btn btn-primary btn-lg" tabindex="-1" role="button" aria-disabled="true">
+                <i class="fa-solid fa-plus"></i>
+                <span>Создать экспертизу</span>
+            </a>
+          </div>
+            <h1 class="text-center">Исследования</h1>
+            <div class="row p-5">
+                {% for research in researches %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ research.title }}</h5>
+                            <p class="card-text">
+                                Автор: {{ research.author.username }}<br>
+                                Дата создания: {{ research.created_at|date:"d M Y" }}<br>
+                                {% if research.ratings.count > 0 %}
+                                Средняя оценка: {{ research.average_rating }}
+                                {% else %}
+                                Оценок еще нет
+                                {% endif %}
+                            </p>
+                            {% if user.is_authenticated %}
+                            <a href="{% url 'rate_aspect' research.id %}" class="btn btn-primary">Оценить исследование</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+
+{% include 'core/pagination.html' %}
+
+{% endblock content %}
