@@ -20,7 +20,8 @@ from django.contrib.auth import authenticate, login, logout
 def home(request):
     researches = Research.objects.all().prefetch_related('ratings') 
     for research in researches:
-        research.average_rating = round(research.ratings.aggregate(Avg('score'))['score__avg'], 3) or 0
+        research.average_rating = round(research.ratings.aggregate(Avg('score'))['score__avg'] or 0, 3)  if research.average_rating is not None else 0
+       
     return render(request, 'index.html', {'researches': researches})
 
 @login_required
@@ -162,6 +163,7 @@ def research_detail(request, research_id):
     all_scores = []
     experts = research.participants.all()
     rating_expet = ''
+    result = research.resultResearch.all()
     for expert in experts:
         ratings = expert.rating_set.filter(research=research)
         if ratings:
@@ -203,6 +205,7 @@ def research_detail(request, research_id):
     ratings_dict = {rating.parameter.id: rating.score for rating in existing_ratings}
     unique_users_count = Rating.objects.filter(parameter__aspect__research=research).values('user').distinct().count()
     total_experts_count = research.participants.count() 
+    print(rating_expet)
     if unique_users_count >= total_experts_count:
         research.is_completed = True
         research.save()
@@ -220,8 +223,8 @@ def research_detail(request, research_id):
 def research_detail_not(request, research_id):
     research = get_object_or_404(Research, id=research_id)
     aspects = research.aspects.all()
-    for aspect in aspects:
-        aspect.parameters = aspect.parameters.annotate(average_score=Avg('ratings__score'))
+    #for aspect in aspects:
+    #    aspect.parameters = aspect.parameters.annotate(average_score=Avg('ratings__score')) or 0
     average_rating = research.ratings.aggregate(Avg('score'))['score__avg'] or 0
     is_editable = not research.is_completed
     existing_ratings = Rating.objects.filter(parameter__aspect__research=research)

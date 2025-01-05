@@ -43,7 +43,7 @@
                 <div class ="pt-3" >
                     <h5>Эксперты данного исследования </h5>
                     <ul class="list-group px-4">
-                        {% if rating_expet in not '' %}
+                        {% if rating_expet %}
                             {{ rating_expet|linebreaks }}
                         {% else %}
                             {% for res in research.participants.all %}
