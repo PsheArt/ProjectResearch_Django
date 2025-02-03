@@ -6,13 +6,13 @@ class ResearchForm(forms.ModelForm):
     participants = forms.ModelMultipleChoiceField(
         queryset=User.objects.all(),
         widget=forms.CheckboxSelectMultiple,
-        required=True,
+        required=False,
         label = "Эксперты"
     )
 
     class Meta:
         model = Research
-        fields = ['title', 'pdf_document','participants']
+        fields = ['title', 'pdf_document', 'participants']
         widgets = {
             "title" : forms.TextInput(attrs={"class" : "title"}),
         }

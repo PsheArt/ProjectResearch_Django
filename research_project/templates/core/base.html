@@ -57,8 +57,7 @@
             <div class="col-lg-7 col-12 d-flex gap-5 justify-content-lg-start justify-content-between">
                 <div class="d-flex flex-column gap-2">
                     <a href="{% url 'research_list' %}" class="text-white text-decoration-none link-hover fs-5 w-auto">Список экспертиз качества маркетинговых исследований</a>
-                    <a href=" {% if user.is_authenticated and user.is_active %} {% url 'create_research' %} {% else %} {% url 'login' %} {% endif %} "  class="text-white text-decoration-none link-hover fs-5">Мои экспертизы</a>
-                    <a href="range_expert.html" class="text-white text-decoration-none link-hover fs-5">Оценить</a>
+                    <a href=" {% if user.is_authenticated and user.is_active %} {% url 'create_research' %} {% else %} {% url 'login' %} {% endif %} "  class="text-white text-decoration-none link-hover fs-5">Создать новую экспертизу</a>
                 </div>
                      
             </div>

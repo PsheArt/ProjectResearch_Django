@@ -56,7 +56,12 @@ def create_research(request):
     if request.method == 'POST':
         form = ResearchForm(request.POST, request.FILES)
         if form.is_valid():
-            research = form.save(commit=False)
+            research = form.save()
+            participant_ids = request.POST.get('participants-input', '').split(',')
+            print(participant_ids)
+            for participant_id in participant_ids:
+                if participant_id: 
+                    research.participants.add(participant_id)
             research.author = request.user 
             research.save()
             aspects_data = request.POST.getlist('aspect_name')

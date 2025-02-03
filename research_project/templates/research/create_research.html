@@ -33,11 +33,13 @@
             </div>
         
             <div class="mb-3">
-                <label class="form-label">{{ form.participants.label }}</label>
-                <div>
-                    {{ form.participants}}
-                </div>
+                <label class="form-label">Выбранные эксперты:</label>
+                <div id="selected-participants" class="mb-2"></div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#expertModal">Добавить экспертов</button>
+                <input type="hidden" name="participants-input" class="hide" id="participants-input" value="">
             </div>
+        
+            
     <div id="aspects-container">
 
     </div>
@@ -46,6 +48,31 @@
 </form>
 </div>
 </section>
+
+<div class="modal fade" id="expertModal" tabindex="-1" aria-labelledby="expertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="expertModalLabel">Выберите экспертов</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="search-expert" class="form-control mb-2" placeholder="Поиск по имени...">
+                <ul id="expert-list" class="list-group">
+                    {% for expert in form.participants.field.queryset.all %}
+                        <li class="list-group-item expert-item" data-id="{{ expert.id }}">
+                            <input type="checkbox" value="{{ expert.id }}" class="expert-checkbox"> {{ expert.username }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" id="add-selected-experts" class="btn btn-primary">ОК</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
@@ -78,6 +105,63 @@
         });
     });
     </script>
+   <script>
+    const selectedExperts = new Set(); // Хранение выбранных экспертов
+    document.getElementById('add-selected-experts').addEventListener('click', function() {
+        const selectedParticipantsDiv = document.getElementById('selected-participants');
+        selectedParticipantsDiv.innerHTML = ''; // Очистка предыдущих выбранных экспертов
+        const selectedIds = []; 
+       // const participantsInput = document.getElementById('participants-input');
+        
+        document.querySelectorAll('.expert-checkbox:checked').forEach(checkbox => {
+                const expertName = checkbox.parentNode.innerText.trim();
+                const listItem = document.createElement('li');
+                selectedExperts.add(checkbox.value);
+                selectedParticipantsDiv.innerHTML += `<div>${expertName} <button type='button' class='remove-expert' data-id='${checkbox.value}'>Удалить</button></div>`;
+                let currentParticipants = selectedExperts.value.split(',').filter(Boolean);
+        });
+        document.getElementById('participants-input').value = selectedExperts.join(',');
+
+        updateExpertList(); // Обновляем список экспертов
+        // Закрытие модального окна
+        var modal = bootstrap.Modal.getInstance(document.getElementById('expertModal'));
+        if (modal) {
+            modal.hide();
+        }
+    });
+
+    function updateExpertList() {
+        const expertItems = document.querySelectorAll('.expert-item');
+        expertItems.forEach(item => {
+            const expertId = item.getAttribute('data-id');
+            if (selectedExperts.has(expertId)) {
+                item.style.display = 'none'; // Скрываем выбранных экспертов
+            } else {
+                item.style.display = ''; // Показываем невыбранных экспертов
+            }
+        });
+    }
+
+    // Поиск экспертов
+    document.getElementById('search-expert').addEventListener('input', function() {
+        const searchValue = this.value.toLowerCase();
+        document.querySelectorAll('#expert-list .list-group-item').forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(searchValue) ? '' : 'none';
+        });
+    });
+
+    // Удаление эксперта из списка
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-expert')) {
+            const expertId = e.target.getAttribute('data-id');
+            e.target.parentNode.remove();
+            selectedExperts.delete(expertId); // Удаляем эксперта из выбранных
+            updateExpertList(); // Обновляем список экспертов
+        }
+    });
+
+</script>
 </body>
 {% include 'core/pagination.html' %}
 
