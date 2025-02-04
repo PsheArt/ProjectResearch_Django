@@ -33,10 +33,12 @@
             </div>
         
             <div class="mb-3">
-                <label class="form-label">Выбранные эксперты:</label>
-                <div id="selected-participants" class="mb-2"></div>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#expertModal">Добавить экспертов</button>
-                <input type="hidden" name="participants-input" class="hide" id="participants-input" value="">
+                <label class="form-label">{{ form.participants.label }}</label>
+                <div id="participants-list">
+                    
+                    {{ form.participants }}
+                </div>
+                <button type="button" class="btn btn-primary" id="add-experts-btn">Добавить экспертов</button>
             </div>
         
             
@@ -49,26 +51,20 @@
 </div>
 </section>
 
-<div class="modal fade" id="expertModal" tabindex="-1" aria-labelledby="expertModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Модальное окно -->
+<div class="modal fade" id="expertsModal" tabindex="-1" role="dialog" aria-labelledby="expertsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="expertModalLabel">Выберите экспертов</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="expertsModalLabel">Выберите экспертов</h5>
             </div>
             <div class="modal-body">
-                <input type="text" id="search-expert" class="form-control mb-2" placeholder="Поиск по имени...">
-                <ul id="expert-list" class="list-group">
-                    {% for expert in form.participants.field.queryset.all %}
-                        <li class="list-group-item expert-item" data-id="{{ expert.id }}">
-                            <input type="checkbox" value="{{ expert.id }}" class="expert-checkbox"> {{ expert.username }}
-                        </li>
-                    {% endfor %}
-                </ul>
+                <input type="text" id="expert-search" class="form-control" placeholder="Поиск по имени...">
+                <ul id="expert-results" class="list-group mt-2"></ul>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                <button type="button" id="add-selected-experts" class="btn btn-primary">ОК</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="select-experts-btn">OK</button>
             </div>
         </div>
     </div>
@@ -105,62 +101,65 @@
         });
     });
     </script>
-   <script>
-    const selectedExperts = new Set(); // Хранение выбранных экспертов
-    document.getElementById('add-selected-experts').addEventListener('click', function() {
-        const selectedParticipantsDiv = document.getElementById('selected-participants');
-        selectedParticipantsDiv.innerHTML = ''; // Очистка предыдущих выбранных экспертов
-        const selectedIds = []; 
-       // const participantsInput = document.getElementById('participants-input');
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const expertsModal = new bootstrap.Modal(document.getElementById('expertsModal'));
+        const expertSearch = document.getElementById('expert-search');
+        const expertResults = document.getElementById('expert-results');
+        const participantsList = document.getElementById('participants-list');
+        const participantsInput = document.createElement('input');
         
-        document.querySelectorAll('.expert-checkbox:checked').forEach(checkbox => {
-                const expertName = checkbox.parentNode.innerText.trim();
-                const listItem = document.createElement('li');
-                selectedExperts.add(checkbox.value);
-                selectedParticipantsDiv.innerHTML += `<div>${expertName} <button type='button' class='remove-expert' data-id='${checkbox.value}'>Удалить</button></div>`;
-                let currentParticipants = selectedExperts.value.split(',').filter(Boolean);
+        // Создаем скрытое поле для хранения выбранных экспертов
+        participantsInput.type = 'hidden';
+        participantsInput.name = 'participants'; // Имя должно совпадать с именем поля в форме
+        participantsInput.id = 'participants-input';
+        document.forms[1].appendChild(participantsInput); // Добавляем скрытое поле в форму
+    
+        document.getElementById('add-experts-btn').addEventListener('click', function() {
+            expertsModal.show();
+            loadExperts(); // загружаем экспертов при открытии модального окна
         });
-        document.getElementById('participants-input').value = selectedExperts.join(',');
-
-        updateExpertList(); // Обновляем список экспертов
-        // Закрытие модального окна
-        var modal = bootstrap.Modal.getInstance(document.getElementById('expertModal'));
-        if (modal) {
-            modal.hide();
-        }
-    });
-
-    function updateExpertList() {
-        const expertItems = document.querySelectorAll('.expert-item');
-        expertItems.forEach(item => {
-            const expertId = item.getAttribute('data-id');
-            if (selectedExperts.has(expertId)) {
-                item.style.display = 'none'; // Скрываем выбранных экспертов
-            } else {
-                item.style.display = ''; // Показываем невыбранных экспертов
-            }
+    
+        expertSearch.addEventListener('input', function() {
+            loadExperts(expertSearch.value);
         });
-    }
-
-    // Поиск экспертов
-    document.getElementById('search-expert').addEventListener('input', function() {
-        const searchValue = this.value.toLowerCase();
-        document.querySelectorAll('#expert-list .list-group-item').forEach(item => {
-            const text = item.innerText.toLowerCase();
-            item.style.display = text.includes(searchValue) ? '' : 'none';
+       
+        document.getElementById('select-experts-btn').addEventListener('click', function() {
+            const selectedExperts = [...expertResults.querySelectorAll('.list-group-item.active')];
+            participantsList.innerHTML = ''; // Очищаем список участников
+            const selectedIds = []; // Массив для хранения ID выбранных экспертов
+    
+            selectedExperts.forEach(expert => {
+                const expertId = expert.dataset.id;
+                const expertName = expert.innerText;
+                participantsList.innerHTML += `<span>${expertName} (ID: ${expertId})</span><br>`;
+                selectedIds.push(expertId); // Добавляем ID в массив
+            });
+    
+            // Обновляем скрытое поле с выбранными ID
+            participantsInput.value = selectedIds.join(','); // Преобразуем массив в строку
+            expertsModal.hide();
         });
-    });
 
-    // Удаление эксперта из списка
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-expert')) {
-            const expertId = e.target.getAttribute('data-id');
-            e.target.parentNode.remove();
-            selectedExperts.delete(expertId); // Удаляем эксперта из выбранных
-            updateExpertList(); // Обновляем список экспертов
-        }
-    });
+            function loadExperts(query = '') {
+                fetch(`/search_experts/?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        expertResults.innerHTML = '';
+                        data.forEach(expert => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
 
+                            li.dataset.id = expert.id;
+                            li.innerText = expert.name;
+                            li.addEventListener('click', function() {
+                                li.classList.toggle('active');
+                            });
+                            expertResults.appendChild(li);
+                        });
+                    });
+                }
+});
 </script>
 </body>
 {% include 'core/pagination.html' %}

@@ -14,7 +14,9 @@ from django.db.models import Avg
 from .models import Rating, Research, Aspect, Parameter, ResultResearch
 from django.core.mail import send_mail
 from django.contrib import messages
+from django.http import JsonResponse
 
+from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
 def home(request):
@@ -57,16 +59,17 @@ def create_research(request):
         form = ResearchForm(request.POST, request.FILES)
         if form.is_valid():
             research = form.save()
-            participant_ids = request.POST.get('participants-input', '').split(',')
-            print(participant_ids)
-            for participant_id in participant_ids:
-                if participant_id: 
-                    research.participants.add(participant_id)
             research.author = request.user 
-            research.save()
+            # Обработка участников из скрытого поля
+            participants_ids = request.POST.get('participants', '').split(',')
+            participants_ids = [id for id in participants_ids if id.isdigit()]  # Фильтруем только числовые значения
+            print(participants_ids)
+            if participants_ids:  # Проверяем, что список не пуст
+                participants = User.objects.filter(id__in=participants_ids)
+                research.participants.set(participants)  # Устанавливаем участников
+                research.save()
             aspects_data = request.POST.getlist('aspect_name')
             stages_data = request.POST.getlist('stage_number')     
-            form.save_m2m()
             last_stage = 0
             for i in range(len(aspects_data)):
                 aspect_form = AspectForm({'name': aspects_data[i], 'stage_number': stages_data[i]})
@@ -101,6 +104,11 @@ def create_research(request):
         form = ResearchForm()
     return render(request, 'research/create_research.html', {'form': form})
 
+def search_experts(request):
+    query = request.GET.get('q', '')
+    experts = User.objects.filter(username__icontains=query)[:3]  # Ограничиваем до 3 экспертов
+    results = [{'id': expert.id, 'name': expert.username} for expert in experts]
+    return JsonResponse(results, safe=False)
 
 @login_required
 def rate_aspect(request, aspect_id):

@@ -3,16 +3,9 @@ from .models import Research, Aspect, Parameter, Rating
 from django.contrib.auth.models import User
 
 class ResearchForm(forms.ModelForm):
-    participants = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label = "Эксперты"
-    )
-
     class Meta:
         model = Research
-        fields = ['title', 'pdf_document', 'participants']
+        fields = ['title', 'pdf_document']
         widgets = {
             "title" : forms.TextInput(attrs={"class" : "title"}),
         }
