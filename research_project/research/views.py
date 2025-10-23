@@ -61,7 +61,7 @@ def create_research(request):
             research = form.save()
             research.author = request.user 
             participants_ids = request.POST.get('participants', '').split(',')
-            participants_ids = [id for id in participants_ids if id.isdigit()]  # Фильтруем только числовые значения
+            participants_ids = [id for id in participants_ids if id.isdigit()] 
             print(participants_ids)
             if participants_ids:  # Проверяем, что список не пуст
                 participants = User.objects.filter(id__in=participants_ids)
