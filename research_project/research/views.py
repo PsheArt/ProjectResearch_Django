@@ -60,7 +60,6 @@ def create_research(request):
         if form.is_valid():
             research = form.save()
             research.author = request.user 
-            # Обработка участников из скрытого поля
             participants_ids = request.POST.get('participants', '').split(',')
             participants_ids = [id for id in participants_ids if id.isdigit()]  # Фильтруем только числовые значения
             print(participants_ids)
