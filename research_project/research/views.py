@@ -63,7 +63,7 @@ def create_research(request):
             participants_ids = request.POST.get('participants', '').split(',')
             participants_ids = [id for id in participants_ids if id.isdigit()] 
             print(participants_ids)
-            if participants_ids:  # Проверяем, что список не пуст
+            if participants_ids:  
                 participants = User.objects.filter(id__in=participants_ids)
                 research.participants.set(participants)  # Устанавливаем участников
                 research.save()
