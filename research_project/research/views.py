@@ -65,7 +65,7 @@ def create_research(request):
             print(participants_ids)
             if participants_ids:  
                 participants = User.objects.filter(id__in=participants_ids)
-                research.participants.set(participants)  # Устанавливаем участников
+                research.participants.set(participants) 
                 research.save()
             aspects_data = request.POST.getlist('aspect_name')
             stages_data = request.POST.getlist('stage_number')     
