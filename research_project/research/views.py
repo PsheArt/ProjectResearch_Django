@@ -105,7 +105,7 @@ def create_research(request):
 
 def search_experts(request):
     query = request.GET.get('q', '')
-    experts = User.objects.filter(username__icontains=query)[:3]  # Ограничиваем до 3 экспертов
+    experts = User.objects.filter(username__icontains=query)[:3]  
     results = [{'id': expert.id, 'name': expert.username} for expert in experts]
     return JsonResponse(results, safe=False)
 
