@@ -1,7 +1,6 @@
 from django.urls import path
 from .views import research_list, create_research, rate_aspect, get_average_scores, view_ratings, home, research_detail, my_researches, research_detail_not, search_experts
 from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
     path('', home, name='home'),
