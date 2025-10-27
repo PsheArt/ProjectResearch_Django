@@ -235,8 +235,6 @@ def research_detail(request, research_id):
 def research_detail_not(request, research_id):
     research = get_object_or_404(Research, id=research_id)
     aspects = research.aspects.all()
-    #for aspect in aspects:
-    #    aspect.parameters = aspect.parameters.annotate(average_score=Avg('ratings__score')) or 0
     average_rating = research.ratings.aggregate(Avg('score'))['score__avg'] or 0
     is_editable = not research.is_completed
     existing_ratings = Rating.objects.filter(parameter__aspect__research=research)
@@ -248,6 +246,5 @@ def research_detail_not(request, research_id):
     })
 
 def my_researches(request):
-    # Получаем все исследования, где текущий пользователь является автором
     researches = Research.objects.filter(author=request.user)
     return render(request, 'research/my_research.html', {'researches': researches})
