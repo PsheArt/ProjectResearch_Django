@@ -1,12 +1,7 @@
 from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-
 from research_project.settings import EMAIL_HOST_USER
 from .forms import ResearchForm, AspectForm, ParameterForm, RatingForm
 from django.db.models import Avg
