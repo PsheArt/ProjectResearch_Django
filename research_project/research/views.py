@@ -3,10 +3,10 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from research_project.settings import EMAIL_HOST_USER
-from .forms import ResearchForm, AspectForm, ParameterForm, RatingForm
+from .forms import ResearchForm, AspectForm, ParameterForm
 from django.db.models import Avg
 
-from .models import Rating, Research, Aspect, Parameter, ResultResearch
+from .models import Rating, Research, Aspect, ResultResearch
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.http import JsonResponse
