@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.http import JsonResponse
 
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
 
 def home(request):
     researches = Research.objects.all().prefetch_related('ratings') 
