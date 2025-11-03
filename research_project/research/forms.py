@@ -1,6 +1,5 @@
 from django import forms
 from .models import Research, Aspect, Parameter, Rating
-from django.contrib.auth.models import User
 
 class ResearchForm(forms.ModelForm):
     class Meta:
