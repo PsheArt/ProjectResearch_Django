@@ -43,6 +43,22 @@ class Parameter(models.Model):
         return self.name
 
 
+class Rating(models.Model):
+    research = models.ForeignKey(Research, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
+    score = models.PositiveIntegerField()
+
+    def __str__(self): 
+        return f'{self.user.username} - {self.parameter.name}: {self.score}'
+    
+    def average_score(self):
+        ratings = Rating.objects.filter(parameter=self)
+        total_score = sum(rating.score for rating in ratings)
+        print(total_score)
+        count = ratings.count()
+        print(count)
+        return round(total_score / count, 1) if count > 0 else 0
     
 class ResultResearch(models.Model):
     research = models.ForeignKey(Research, on_delete=models.CASCADE, related_name='resultResearch')
