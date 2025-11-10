@@ -9,7 +9,7 @@ from django.db.models import Avg
 
 class Research(models.Model):
     title = models.CharField(max_length=255)
-    pdf_document = models.FileField(upload_to='research_pdfs/')  # 'media/' не нужно — Django сам добавит
+    pdf_document = models.FileField(upload_to='research_pdfs/')  
     participants = models.ManyToManyField(User, related_name='researches')
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
