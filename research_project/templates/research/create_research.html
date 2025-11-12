@@ -8,48 +8,43 @@
             <h2 class="text-center h-2 section_title">Экспертиза качества маркетинговых исследований</h2>
             <ul class="nav justify-content-center gap-2 shadow rounded-2 fs-5 py-2">
                 <li class="nav-item">
-                    <a class="nav-link text-dark link-hover link-active" href="{% url 'research_list' %}">Список экспертиз качества маркетинговых исследований</a>
+                    <a class="nav-link text-dark link-hover" href="{% url 'research_list' %}">Список экспертиз</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active text-dark link-hover" aria-current="page" href="my_surveys.html">Мои экспертизы</a>
+                    <a class="nav-link active text-dark link-hover" href="{% url 'my_researches' %}">Мои экспертизы</a>
                 </li>
             </ul>
         </div>  
     </section>
+    
     <section class="pt-5">
-        <div class = "container-xl d-flex flex-column gap-3">
-            
- <form class= "shadow p-3 rounded-2 position-relative" method="post" enctype="multipart/form-data" >
-    <h2>Форма исследования</h2>
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
-                {{ form.title|add_class:"form-control" }}
-            </div>
-        
-            <div class="mb-3">
-                <label for="{{ form.pdf_document.id_for_label }}" class="form-label">{{ form.pdf_document.label }}</label>
-                {{ form.pdf_document|add_class:"form-control" }}
-            </div>
-        
-            <div class="mb-3">
-                <label class="form-label">{{ form.participants.label }}</label>
-                <div id="participants-list">
-                    
-                    {{ form.participants }}
+        <div class="container-xl d-flex flex-column gap-3">
+            <form class="shadow p-3 rounded-2" method="post" enctype="multipart/form-data">
+                <h2>Форма исследования</h2>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                    {{ form.title|add_class:"form-control" }}
                 </div>
-                <button type="button" class="btn btn-primary" id="add-experts-btn">Добавить экспертов</button>
-            </div>
-        
             
-    <div id="aspects-container">
-
-    </div>
-    <button type="button" class="btn btn-primary add-aspect">Добавить аспект</button>
-    <button type="submit" class="btn btn-success">Отправить</button>
-</form>
-</div>
-</section>
+                <div class="mb-3">
+                    <label class="form-label">{{ form.pdf_document.label }}</label>
+                    {{ form.pdf_document|add_class:"form-control" }}
+                </div>
+            
+                <div class="mb-3">
+                    <label class="form-label">{{ form.participants.label }}</label>
+                    <div id="participants-list"></div>
+                    <button type="button" class="btn btn-primary" id="add-experts-btn">Добавить экспертов</button>
+                </div>
+            
+                <div id="aspects-container"></div>
+                <button type="button" class="btn btn-primary add-aspect">Добавить аспект</button>
+                <button type="submit" class="btn btn-success mt-3">Отправить</button>
+            </form>
+        </div>
+    </section>
 
 <!-- Модальное окно -->
 <div class="modal fade" id="expertsModal" tabindex="-1" role="dialog" aria-labelledby="expertsModalLabel" aria-hidden="true">
