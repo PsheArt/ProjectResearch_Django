@@ -20,7 +20,10 @@ def home(request):
 
 @login_required
 def research_list(request):
-    researches = Research.objects.all()
+    researches = Research.objects.annotate(
+        average_score=Avg('ratings__score')
+    ).prefetch_related('participants')
+
     paginator = Paginator(researches, 1)
     page_number = request.GET.get('page')
     try:
@@ -29,21 +32,19 @@ def research_list(request):
         page_obj = paginator.page(1)
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
-    rated_research_ids = set()
     for research in researches:
-        average_score = research.ratings.aggregate(Avg('score')).get('score__avg', 0)
-        research.average_rating = round(average_score, 3) if average_score is not None else 0
-    if request.user.is_authenticated:
-        user_ratings = request.user.rating_set.all()
-        rated_research_ids = set(rating.research.id for rating in request.user.rating_set.all())
+        research.average_rating = round(research.average_score or 0, 3)
+    rated_research_ids = set(
+        Rating.objects.filter(user=request.user).values_list('research_id', flat=True)
+    )
+
     context = {
         'researches': researches,
-        'user_ratings': user_ratings,
         'rated_research_ids': rated_research_ids,
         'page_obj': page_obj
-
     }
     return render(request, 'research/research_list.html', context)
+
 
 @login_required
 def create_research(request):
