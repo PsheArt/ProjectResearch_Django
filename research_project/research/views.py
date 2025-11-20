@@ -51,43 +51,45 @@ def create_research(request):
     if request.method == 'POST':
         form = ResearchForm(request.POST, request.FILES)
         if form.is_valid():
-            research = form.save()
-            research.author = request.user 
-            participants_ids = request.POST.get('participants', '').split(',')
-            participants_ids = [id for id in participants_ids if id.isdigit()] 
-            print(participants_ids)
-            if participants_ids:  
-                participants = User.objects.filter(id__in=participants_ids)
-                research.participants.set(participants) 
-                research.save()
+            research = form.save(commit=False)
+            research.author = request.user
+            research.save()
+
+            participants_ids = request.POST.get('participants', '')
+            if participants_ids:
+                participant_ids = [int(id) for id in participants_ids.split(',') if id.isdigit()]
+                participants = User.objects.filter(id__in=participant_ids)
+                research.participants.set(participants)
+
             aspects_data = request.POST.getlist('aspect_name')
-            stages_data = request.POST.getlist('stage_number')     
-            last_stage = 0
-            for i in range(len(aspects_data)):
-                aspect_form = AspectForm({'name': aspects_data[i], 'stage_number': stages_data[i]})
+            stages_data = request.POST.getlist('stage_number')
+            param_lists = [request.POST.getlist(f'parameter_name_[{i + 1}]') for i in range(len(aspects_data))]
+
+            for i, (aspect_name, stage_num) in enumerate(zip(aspects_data, stages_data)):
+                aspect_form = AspectForm({'name': aspect_name, 'stage_number': stage_num})
                 if aspect_form.is_valid():
                     aspect = aspect_form.save(commit=False)
                     aspect.research = research
                     aspect.save()
-                    param_data = request.POST.getlist(f'parameter_name_[{i + 1}]')
-                    last_stage +=1
-                    for param_name in param_data:
-                        if param_name:
-                            parameter_form = ParameterForm({'name': param_name})
-                            if parameter_form.is_valid():
-                                parameter = parameter_form.save(commit=False)
-                                parameter.aspect = aspect
-                                parameter.save()
+
+                    for param_name in param_lists[i]:
+                        if param_name.strip():
+                            param_form = ParameterForm({'name': param_name.strip()})
+                            if param_form.is_valid():
+                                param = param_form.save(commit=False)
+                                param.aspect = aspect
+                                param.save()
                             else:
-                                messages.error(request, f'Ошибка в параметре: {parameter_form.errors}')
+                                messages.error(request, f'Ошибка в параметре: {param_form.errors}')
                 else:
                     messages.error(request, f'Ошибка в аспекте: {aspect_form.errors}')
-            result =ResultResearch.objects.create(
-                research = research,
-                user = request.user,
-                name = "Подведите итоги исследования"
+
+            ResultResearch.objects.create(
+                research=research,
+                user=request.user,
+                name="Подведите итоги исследования"
             )
-            
+
             messages.success(request, 'Исследование создано и участники уведомлены.')
             return redirect('research_list')
         else:
@@ -96,9 +98,10 @@ def create_research(request):
         form = ResearchForm()
     return render(request, 'research/create_research.html', {'form': form})
 
+
 def search_experts(request):
     query = request.GET.get('q', '')
-    experts = User.objects.filter(username__icontains=query)[:3]  
+    experts = User.objects.filter(username__icontains=query)[:3]
     results = [{'id': expert.id, 'name': expert.username} for expert in experts]
     return JsonResponse(results, safe=False)
 
