@@ -127,8 +127,6 @@ def rate_aspect(request, aspect_id):
             resTXT = request.POST.get(f'results_{result.id}')
             result.result_value = resTXT
             result.save()
-
-        # Проверка завершения
         unique_users_count = Rating.objects.filter(
             parameter__aspect__research=research
         ).values('user').distinct().count()
@@ -157,7 +155,10 @@ def rate_aspect(request, aspect_id):
 
 def view_ratings(request, research_id):
     research = get_object_or_404(Research, id=research_id)
-    user_ratings = Rating.objects.filter(user=request.user, parameter__aspect__research=research)
+    user_ratings = Rating.objects.filter(
+        user=request.user,
+        parameter__aspect__research=research
+    ).select_related('parameter')
 
     if request.method == 'POST':
         for rating in user_ratings:
@@ -165,13 +166,13 @@ def view_ratings(request, research_id):
             if new_score:
                 rating.score = new_score
                 rating.save()
-        
         return redirect('view_ratings', research_id=research.id)
 
     return render(request, 'research/view_ratings.html', {
         'research': research,
         'user_ratings': user_ratings,
     })
+
 def get_average_scores(request, aspect_id):
     aspect = Aspect.objects.get(pk=aspect_id)
     parameters = aspect.parameters.all()
