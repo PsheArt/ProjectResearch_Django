@@ -174,12 +174,11 @@ def view_ratings(request, research_id):
     })
 
 def get_average_scores(request, aspect_id):
-    aspect = Aspect.objects.get(pk=aspect_id)
+    aspect = get_object_or_404(Aspect, pk=aspect_id)
     parameters = aspect.parameters.all()
- 
     scores = {param.name: Rating.average_score(param) for param in parameters}
-    
     return JsonResponse(scores)
+
 
 def research_detail(request, research_id):
     research = get_object_or_404(Research, id=research_id)
