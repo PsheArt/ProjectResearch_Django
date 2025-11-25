@@ -237,6 +237,7 @@ def research_detail(request, research_id):
         'is_editable': is_editable,
     })
 
+@login_required
 def research_detail_not(request, research_id):
     research = get_object_or_404(Research, id=research_id)
     aspects = research.aspects.all()
@@ -249,6 +250,8 @@ def research_detail_not(request, research_id):
         'is_editable': is_editable,
     })
 
+
+@login_required
 def my_researches(request):
     researches = Research.objects.filter(author=request.user)
     return render(request, 'research/my_research.html', {'researches': researches})
