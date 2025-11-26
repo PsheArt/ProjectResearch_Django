@@ -20,10 +20,7 @@ def home(request):
 
 @login_required
 def research_list(request):
-    researches = Research.objects.annotate(
-        average_score=Avg('ratings__score')
-    ).prefetch_related('participants')
-
+    researches = Research.objects.all()
     paginator = Paginator(researches, 1)
     page_number = request.GET.get('page')
     try:
@@ -32,64 +29,64 @@ def research_list(request):
         page_obj = paginator.page(1)
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
+    rated_research_ids = set()
     for research in researches:
-        research.average_rating = round(research.average_score or 0, 3)
-    rated_research_ids = set(
-        Rating.objects.filter(user=request.user).values_list('research_id', flat=True)
-    )
-
+        average_score = research.ratings.aggregate(Avg('score')).get('score__avg', 0)
+        research.average_rating = round(average_score, 3) if average_score is not None else 0
+    if request.user.is_authenticated:
+        user_ratings = request.user.rating_set.all()
+        rated_research_ids = set(rating.research.id for rating in request.user.rating_set.all())
     context = {
         'researches': researches,
+        'user_ratings': user_ratings,
         'rated_research_ids': rated_research_ids,
         'page_obj': page_obj
+
     }
     return render(request, 'research/research_list.html', context)
-
 
 @login_required
 def create_research(request):
     if request.method == 'POST':
         form = ResearchForm(request.POST, request.FILES)
         if form.is_valid():
-            research = form.save(commit=False)
-            research.author = request.user
-            research.save()
-
-            participants_ids = request.POST.get('participants', '')
-            if participants_ids:
-                participant_ids = [int(id) for id in participants_ids.split(',') if id.isdigit()]
-                participants = User.objects.filter(id__in=participant_ids)
-                research.participants.set(participants)
-
+            research = form.save()
+            research.author = request.user 
+            participants_ids = request.POST.get('participants', '').split(',')
+            participants_ids = [id for id in participants_ids if id.isdigit()] 
+            print(participants_ids)
+            if participants_ids:  
+                participants = User.objects.filter(id__in=participants_ids)
+                research.participants.set(participants) 
+                research.save()
             aspects_data = request.POST.getlist('aspect_name')
-            stages_data = request.POST.getlist('stage_number')
-            param_lists = [request.POST.getlist(f'parameter_name_[{i + 1}]') for i in range(len(aspects_data))]
-
-            for i, (aspect_name, stage_num) in enumerate(zip(aspects_data, stages_data)):
-                aspect_form = AspectForm({'name': aspect_name, 'stage_number': stage_num})
+            stages_data = request.POST.getlist('stage_number')     
+            last_stage = 0
+            for i in range(len(aspects_data)):
+                aspect_form = AspectForm({'name': aspects_data[i], 'stage_number': stages_data[i]})
                 if aspect_form.is_valid():
                     aspect = aspect_form.save(commit=False)
                     aspect.research = research
                     aspect.save()
-
-                    for param_name in param_lists[i]:
-                        if param_name.strip():
-                            param_form = ParameterForm({'name': param_name.strip()})
-                            if param_form.is_valid():
-                                param = param_form.save(commit=False)
-                                param.aspect = aspect
-                                param.save()
+                    param_data = request.POST.getlist(f'parameter_name_[{i + 1}]')
+                    last_stage +=1
+                    for param_name in param_data:
+                        if param_name:
+                            parameter_form = ParameterForm({'name': param_name})
+                            if parameter_form.is_valid():
+                                parameter = parameter_form.save(commit=False)
+                                parameter.aspect = aspect
+                                parameter.save()
                             else:
-                                messages.error(request, f'Ошибка в параметре: {param_form.errors}')
+                                messages.error(request, f'Ошибка в параметре: {parameter_form.errors}')
                 else:
                     messages.error(request, f'Ошибка в аспекте: {aspect_form.errors}')
-
-            ResultResearch.objects.create(
-                research=research,
-                user=request.user,
-                name="Подведите итоги исследования"
+            result =ResultResearch.objects.create(
+                research = research,
+                user = request.user,
+                name = "Подведите итоги исследования"
             )
-
+            
             messages.success(request, 'Исследование создано и участники уведомлены.')
             return redirect('research_list')
         else:
@@ -98,10 +95,9 @@ def create_research(request):
         form = ResearchForm()
     return render(request, 'research/create_research.html', {'form': form})
 
-
 def search_experts(request):
     query = request.GET.get('q', '')
-    experts = User.objects.filter(username__icontains=query)[:3]
+    experts = User.objects.filter(username__icontains=query)[:3]  
     results = [{'id': expert.id, 'name': expert.username} for expert in experts]
     return JsonResponse(results, safe=False)
 
@@ -109,7 +105,7 @@ def search_experts(request):
 def rate_aspect(request, aspect_id):
     research = get_object_or_404(Research, pk=aspect_id)
     aspects = research.aspects.all().prefetch_related('parameters')
-    max_stage = aspects.aggregate(MaxStage=max('stage_number'))['MaxStage'] or 0
+    max_stage = aspects.aggregate(MaxStage=Max('stage_number'))['MaxStage'] or 0
 
     if request.method == 'POST':
         for aspect in aspects:
@@ -127,6 +123,8 @@ def rate_aspect(request, aspect_id):
             resTXT = request.POST.get(f'results_{result.id}')
             result.result_value = resTXT
             result.save()
+
+        # Проверка завершения
         unique_users_count = Rating.objects.filter(
             parameter__aspect__research=research
         ).values('user').distinct().count()
@@ -153,6 +151,7 @@ def rate_aspect(request, aspect_id):
         'max_stage': max_stage
     })
 
+
 def view_ratings(request, research_id):
     research = get_object_or_404(Research, id=research_id)
     user_ratings = Rating.objects.filter(
@@ -173,13 +172,16 @@ def view_ratings(request, research_id):
         'user_ratings': user_ratings,
     })
 
+
 def get_average_scores(request, aspect_id):
     aspect = get_object_or_404(Aspect, pk=aspect_id)
     parameters = aspect.parameters.all()
+
     scores = {param.name: Rating.average_score(param) for param in parameters}
     return JsonResponse(scores)
 
 
+@login_required
 def research_detail(request, research_id):
     research = get_object_or_404(Research, id=research_id)
     aspects = research.aspects.all().prefetch_related('parameters__rating_set__user')
@@ -209,8 +211,12 @@ def research_detail(request, research_id):
                         'parameters': {}
                     }
                 user_ratings[user_id]['ratings'][aspect.id]['parameters'][param.id] = rating.score
+
+    # Средняя оценка по исследованию
     avg_research_score = research.ratings.aggregate(avg=Avg('score'))['avg'] or 0
     average_rating = round(avg_research_score, 3)
+
+    # Проверка завершения
     unique_users_count = Rating.objects.filter(
         parameter__aspect__research=research
     ).values('user').distinct().count()
@@ -236,6 +242,7 @@ def research_detail(request, research_id):
         'rating_expet': rating_expet,
         'is_editable': is_editable,
     })
+
 
 @login_required
 def research_detail_not(request, research_id):
