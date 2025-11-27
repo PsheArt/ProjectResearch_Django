@@ -103,53 +103,36 @@ def search_experts(request):
 
 @login_required
 def rate_aspect(request, aspect_id):
-    research = get_object_or_404(Research, pk=aspect_id)
-    aspects = research.aspects.all().prefetch_related('parameters')
-    max_stage = aspects.aggregate(MaxStage=Max('stage_number'))['MaxStage'] or 0
-
+    research = Research.objects.get(pk=aspect_id)
+    aspects = Aspect.objects.filter(research=research)
+    max_stage = aspects.last().stage_number+1
+    existing_ratings = Rating.objects.filter(user=request.user, parameter__aspect__research=research)
+    existing_ratings_by_aspect = 0
+    ratings_dict = {rating.parameter.id: rating.score for rating in existing_ratings}
+    results = ResultResearch.objects.filter(research=research).first()
     if request.method == 'POST':
         for aspect in aspects:
+            existing_ratings_by_aspect = Rating.objects.filter(parameter__aspect = aspect)
+            print(existing_ratings_by_aspect)
             for param in aspect.parameters.all():
                 score = request.POST.get(f'score_{param.id}')
                 if score:
-                    Rating.objects.update_or_create(
-                        user=request.user,
-                        parameter=param,
-                        defaults={'research': research, 'score': int(score)}
-                    )
-
-        result = ResultResearch.objects.filter(research=research).first()
-        if result:
-            resTXT = request.POST.get(f'results_{result.id}')
-            result.result_value = resTXT
-            result.save()
-
-        # Проверка завершения
-        unique_users_count = Rating.objects.filter(
-            parameter__aspect__research=research
-        ).values('user').distinct().count()
-        total_experts_count = research.participants.count()
+                    Rating.objects.create(research = research, user=request.user, parameter=param, score=int(score))
+        resTXT = request.POST.get(f'results_{results.id}')
+     
+        results.result_value = resTXT
+        results.save()
+        
+        unique_users_count = Rating.objects.filter(parameter__aspect__research=research).values('user').distinct().count()
+        total_experts_count = research.participants.count() 
         if unique_users_count >= total_experts_count:
             research.is_completed = True
             research.save()
 
         messages.success(request, 'Оценка успешно сохранена.')
-
-    existing_ratings = Rating.objects.filter(
-        user=request.user,
-        parameter__aspect__research=research
-    ).values_list('parameter_id', 'score')
-    ratings_dict = {param_id: score for param_id, score in existing_ratings}
-
-    results = ResultResearch.objects.filter(research=research).first()
-
-    return render(request, 'research/rate_aspect.html', {
-        'research': research,
-        'aspects': aspects,
-        'ratings_dict': ratings_dict,
-        'results': results,
-        'max_stage': max_stage
-    })
+        return render(request, 'research/rate_aspect.html', {'research': research, 'aspects': aspects, 'ratings_dict': ratings_dict, 'results':results})
+    
+    return render(request, 'research/rate_aspect.html', {'research': research, 'aspects': aspects, 'ratings_dict': ratings_dict, 'results':results, 'max_stage':max_stage})
 
 
 def view_ratings(request, research_id):
