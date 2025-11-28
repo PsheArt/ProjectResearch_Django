@@ -134,13 +134,9 @@ def rate_aspect(request, aspect_id):
     
     return render(request, 'research/rate_aspect.html', {'research': research, 'aspects': aspects, 'ratings_dict': ratings_dict, 'results':results, 'max_stage':max_stage})
 
-
 def view_ratings(request, research_id):
     research = get_object_or_404(Research, id=research_id)
-    user_ratings = Rating.objects.filter(
-        user=request.user,
-        parameter__aspect__research=research
-    ).select_related('parameter')
+    user_ratings = Rating.objects.filter(user=request.user, parameter__aspect__research=research)
 
     if request.method == 'POST':
         for rating in user_ratings:
@@ -148,13 +144,20 @@ def view_ratings(request, research_id):
             if new_score:
                 rating.score = new_score
                 rating.save()
+        
         return redirect('view_ratings', research_id=research.id)
 
     return render(request, 'research/view_ratings.html', {
         'research': research,
         'user_ratings': user_ratings,
     })
-
+def get_average_scores(request, aspect_id):
+    aspect = Aspect.objects.get(pk=aspect_id)
+    parameters = aspect.parameters.all()
+ 
+    scores = {param.name: Rating.average_score(param) for param in parameters}
+    
+    return JsonResponse(scores)
 
 def get_average_scores(request, aspect_id):
     aspect = get_object_or_404(Aspect, pk=aspect_id)
