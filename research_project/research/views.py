@@ -159,78 +159,71 @@ def get_average_scores(request, aspect_id):
     
     return JsonResponse(scores)
 
-def get_average_scores(request, aspect_id):
-    aspect = get_object_or_404(Aspect, pk=aspect_id)
-    parameters = aspect.parameters.all()
-
-    scores = {param.name: Rating.average_score(param) for param in parameters}
-    return JsonResponse(scores)
-
-
-@login_required
 def research_detail(request, research_id):
     research = get_object_or_404(Research, id=research_id)
-    aspects = research.aspects.all().prefetch_related('parameters__rating_set__user')
-
-    # Статистика по экспертам
+    aspects = research.aspects.all()
+    aspects_with_avg = []
+    user_ratings = {}
+    all_scores = []
     experts = research.participants.all()
-    rating_expet = ""
+    rating_expet = ''
+    result = research.resultResearch.all()
     for expert in experts:
         ratings = expert.rating_set.filter(research=research)
-        if ratings.exists():
-            avg_score = ratings.aggregate(avg=Avg('score'))['avg'] or 0
-            rating_expet += f"{expert.username} - средняя оценка: {round(avg_score, 3)}\n"
+        if ratings:
+            average_score_experts = round(sum([rating.score for rating in ratings]) / len(ratings), 3)
+            rating_expet += f"{expert.username} - cредняя оценка по исследованию: {average_score_experts}\n"
     rating_expet = rating_expet.rstrip('\n')
-
-    # Собираем оценки пользователей
-    user_ratings = {}
     for aspect in aspects:
-        for param in aspect.parameters.all():
-            for rating in param.rating_set.all():
+        parameters = aspect.parameters.all()
+        for parameter in parameters:
+            scores = parameter.rating_set.values_list('score', flat=True)
+            all_scores.extend(scores)
+            parameter_ratings = parameter.rating_set.all()
+            for rating in parameter_ratings:
                 user_id = rating.user.id
                 user_name = rating.user.username
                 if user_id not in user_ratings:
-                    user_ratings[user_id] = {'name': user_name, 'ratings': {}}
+                    user_ratings[user_id] = {
+                        'name': user_name,
+                        'ratings': {}
+                    }
                 if aspect.id not in user_ratings[user_id]['ratings']:
                     user_ratings[user_id]['ratings'][aspect.id] = {
                         'aspect_name': aspect.name,
                         'parameters': {}
-                    }
-                user_ratings[user_id]['ratings'][aspect.id]['parameters'][param.id] = rating.score
-
-    # Средняя оценка по исследованию
-    avg_research_score = research.ratings.aggregate(avg=Avg('score'))['avg'] or 0
-    average_rating = round(avg_research_score, 3)
-
-    # Проверка завершения
-    unique_users_count = Rating.objects.filter(
-        parameter__aspect__research=research
-    ).values('user').distinct().count()
-    total_experts_count = research.participants.count()
-    if unique_users_count >= total_experts_count and not research.is_completed:
+                    }              
+                user_ratings[user_id]['ratings'][aspect.id]['parameters'][parameter.id] = rating.score
+        if all_scores:
+            average_score = round(sum(all_scores) / len(all_scores), 3)
+        else:
+            average_score = 0
+        aspects_with_avg.append({
+            'aspect': aspect,
+            'parameters': parameters,
+            'average_score': average_score,
+        })
+    average_rating = round(research.ratings.aggregate(Avg('score'))['score__avg'] or 0, 3)
+    is_editable = not research.is_completed
+    existing_ratings = Rating.objects.filter(user=request.user, parameter__aspect__research=research)
+    ratings_dict = {rating.parameter.id: rating.score for rating in existing_ratings}
+    unique_users_count = Rating.objects.filter(parameter__aspect__research=research).values('user').distinct().count()
+    total_experts_count = research.participants.count() 
+    print(rating_expet)
+    if unique_users_count >= total_experts_count:
         research.is_completed = True
         research.save()
-
-    is_editable = not research.is_completed
-
-    existing_ratings = Rating.objects.filter(
-        user=request.user,
-        parameter__aspect__research=research
-    ).values_list('parameter_id', 'score')
-    ratings_dict = {param_id: score for param_id, score in existing_ratings}
-
     return render(request, 'research/research_detail.html', {
         'research': research,
         'aspects': aspects,
-        'ratings_dict': ratings_dict,
+        'ratings_dict':ratings_dict,
+        'aspects_with_avg': aspects_with_avg,
         'user_ratings': user_ratings,
         'average_rating': average_rating,
         'rating_expet': rating_expet,
         'is_editable': is_editable,
     })
 
-
-@login_required
 def research_detail_not(request, research_id):
     research = get_object_or_404(Research, id=research_id)
     aspects = research.aspects.all()
@@ -243,8 +236,6 @@ def research_detail_not(request, research_id):
         'is_editable': is_editable,
     })
 
-
-@login_required
 def my_researches(request):
     researches = Research.objects.filter(author=request.user)
     return render(request, 'research/my_research.html', {'researches': researches})
