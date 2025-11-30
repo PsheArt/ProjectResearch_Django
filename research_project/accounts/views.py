@@ -1,10 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import render, redirect
-
-from research_project.settings import EMAIL_HOST_USER
-from .forms import CustomUserCreationForm
-
-from django.core.mail import send_mail
 from django.contrib import messages
 
 from django.contrib.auth import authenticate, login, logout
